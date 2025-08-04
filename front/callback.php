@@ -69,7 +69,16 @@ if ($test) {
 
 $user_id = Session::getLoginUserID();
 
+
+
 $REDIRECT = "";
+
+if (!$signon_provider->login()) {
+   $res = PluginSinglesignonToolbox::provisionOrRedirect($signon_provider->getResourceOwner(), $signon_provider);
+   if ($res) {
+      Html::nullHeader("Login", PluginSinglesignonToolbox::getBaseURL() . '/index.php');
+   }
+}
 
 if ($user_id || $signon_provider->login()) {
 

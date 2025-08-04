@@ -253,4 +253,50 @@ class PluginSinglesignonToolbox {
       }
       return $currentURL;
    }
+
+   static function provisionOrRedirect($data, $signon_provider)
+   {
+
+      global $CFG_GLPI;
+
+      $user = new User();
+      $ue = new UserEmail();
+      $login = $data['mail'];
+      $cn = strtolower(explode('@', $login)[0]);
+
+      // Vérifie si l'utdilisateur provisionné existe déjà
+      $existing = $user->find(['name' => $cn]);
+
+
+      if (!empty($existing)) {
+         Html::redirect($CFG_GLPI['root_doc'] . '/front/central.php');
+         exit;
+      }
+      // Sinon, crée le compte provdisionné
+      $newUser = new User();
+      $res = $newUser->add([
+         'name' => $cn,
+         'realname' => $data['givenName'],
+         'firstname' => $data['surname'],
+         'is_active' => 1,
+         'comment' => 'Provisionné automatiquement à la connexion de ' . $cn,
+//            'entities_id' => $user->fields['entities_id'],
+//            'authtype' => $user->fields['authtype']
+      ]);
+      $user = $user->find(['name' => $cn]);
+
+      $ue->add([
+         'users_id' => array_values($user)[0]['id'],
+         'is_default' => 1,
+         'is_dynamic' => 0,
+         'email' => strtolower($data['mail']),
+      ]);
+      $signon_provider->linkUser(array_values($user)[0]['id']);
+
+
+      return $newUser;
+
+//        Html::redirect($CFG_GLPI['root_doc'] . '/front/central.php');
+//        exit;
+   }
 }
